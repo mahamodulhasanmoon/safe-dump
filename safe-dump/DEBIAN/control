@@ -1,0 +1,8 @@
+Package: safe-dump
+Version: 1.0
+Section: admin
+Priority: optional
+Architecture: all
+Maintainer: Mahamodul Hasan MOon <moonmahamodul@gmail.com>
+Description: Nightly database backup tool for MySQL/MongoDB/PostgreSQL with email reporting
+Depends: bash, jq, curl, gzip, cron, coreutils

@@ -1,2 +1,88 @@
 #!/bin/bash
-bash /opt/safe-dump/install.sh
+set -e
+
+CONFIG_DIR="/opt/safe-dump/config"
+ENV_FILE="$CONFIG_DIR/.env"
+
+echo "Configuring Safe Dump environment..."
+
+# Create config directory if not exists
+mkdir -p "$CONFIG_DIR"
+
+# If .env doesn't exist, ask for variables interactively
+if [ ! -f "$ENV_FILE" ]; then
+  echo "Creating config file at $ENV_FILE"
+  cat > "$ENV_FILE" <<EOL
+# Safe Dump configuration file
+
+MYSQL_USER=
+MYSQL_PASS=
+MYSQL_HOST=localhost
+
+BACKUP_DIR=/root/db_backups
+LOG_DIR=/root/logs
+
+DATABASES=("bd_mastermind_ota" "ae_mastermind_ota" "in_mastermind_ota")
+
+CLIENT_ID=
+CLIENT_SECRET=
+REFRESH_TOKEN=
+FROM_EMAIL=
+TO_EMAIL=
+EOL
+
+  echo "Please fill out the following configuration:"
+
+  read -p "MySQL Username: " MYSQL_USER
+  read -sp "MySQL Password: " MYSQL_PASS
+  echo
+  read -p "MySQL Host (default: localhost): " MYSQL_HOST
+  MYSQL_HOST=${MYSQL_HOST:-localhost}
+
+  read -p "Backup directory (default: /root/db_backups): " BACKUP_DIR
+  BACKUP_DIR=${BACKUP_DIR:-/root/db_backups}
+
+  read -p "Log directory (default: /root/logs): " LOG_DIR
+  LOG_DIR=${LOG_DIR:-/root/logs}
+
+  read -p "Databases to backup (space separated, e.g. db1 db2 db3): " DBS
+  # Convert input to bash array format
+  DATABASES_ARRAY=$(printf '("%s")' "$(echo $DBS | sed 's/ /" "/g')")
+
+  read -p "Google Client ID: " CLIENT_ID
+  read -p "Google Client Secret: " CLIENT_SECRET
+  read -p "Google Refresh Token: " REFRESH_TOKEN
+  read -p "Email From Address (e.g. Your Name <email@example.com>): " FROM_EMAIL
+  read -p "Email To Addresses (comma separated): " TO_EMAIL
+
+  # Write user input back to .env
+  cat > "$ENV_FILE" <<EOL
+MYSQL_USER=$MYSQL_USER
+MYSQL_PASS=$MYSQL_PASS
+MYSQL_HOST=$MYSQL_HOST
+
+BACKUP_DIR=$BACKUP_DIR
+LOG_DIR=$LOG_DIR
+
+DATABASES=$DATABASES_ARRAY
+
+CLIENT_ID=$CLIENT_ID
+CLIENT_SECRET=$CLIENT_SECRET
+REFRESH_TOKEN=$REFRESH_TOKEN
+FROM_EMAIL="$FROM_EMAIL"
+TO_EMAIL="$TO_EMAIL"
+EOL
+
+else
+  echo "Configuration file already exists at $ENV_FILE. Skipping creation."
+fi
+
+# Create backup and log directories if not exist
+mkdir -p "$BACKUP_DIR"
+mkdir -p "$LOG_DIR"
+
+chmod +x /opt/safe-dump/db_backups.sh /opt/safe-dump/mailer.sh
+
+echo "Safe Dump installation and configuration complete."
+
+exit 0

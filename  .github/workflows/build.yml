@@ -1,0 +1,15 @@
+name: Build safe-dump
+on:
+  push:
+    tags:
+      - 'v*'
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: dpkg-deb --build safe-dump
+      - uses: actions/upload-artifact@v2
+        with:
+          name: safe-dump.deb
+          path: safe-dump.deb
